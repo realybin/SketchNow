@@ -20,7 +20,7 @@ An application brings the ability to draw on your screen(anywhere)
 
 ### Upcoming
 
-See projects [here](https://github.com/orgs/SketchNow/projects)
+See projects [here](https://github.com/realybin/SketchNow/projects)
 
 ### Install
 
