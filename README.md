@@ -2,7 +2,7 @@
 
 # SketchNow
 
-[![Issues](https://img.shields.io/github/issues/realybin/SktechNow.svg)](https://github.com/realybin/SktechNow/issues)
+[![Issues](https://img.shields.io/github/issues/realybin/SketchNow.svg)](https://github.com/realybin/SketchNow/issues)
 
 An application brings the ability to draw on your screen(anywhere)
 
