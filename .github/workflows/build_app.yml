@@ -21,10 +21,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
       - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v4.3.1
         with:
           dotnet-version: 10.0.x
 
@@ -48,7 +48,7 @@ jobs:
           New-Item -Type File -Value "${{ github.event.number }}" -Force -Path "${{github.workspace}}/.build/coveragereport/PullRequestNumber"
 
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: CodeCoverage
           path: ${{github.workspace}}/.build/coveragereport/
@@ -64,14 +64,14 @@ jobs:
         
       - name: Upload Velopack Portable artifact for deployment job
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: Portable
           path: ${{github.workspace}}/.build/release/SketchNow-win-Portable.zip
 
       - name: Upload Velopack Installer artifact for deployment job
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: Installer
           path: ${{github.workspace}}/.build/release/SketchNow-win-Setup.exe
