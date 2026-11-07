@@ -5,7 +5,7 @@ jobs:
   deploy-to-github-releases:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
@@ -24,7 +24,7 @@ jobs:
         run: dotnet test --configuration Release --no-build --coverlet --coverlet-output-format cobertura --results-directory "${{github.workspace}}/.build/coverage"
 
       - name: ReportGenerator
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.3
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.5.12
         with:
           reports: ${{github.workspace}}/.build/coverage/**/coverage.cobertura*.xml
           targetdir: ${{github.workspace}}/.build/coveragereport/
@@ -32,7 +32,7 @@ jobs:
           title: 'Code Coverage'
 
       - name: Upload Code Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: CodeCoverage
           path: ${{github.workspace}}/.build/coveragereport/
