@@ -20,8 +20,7 @@
   -->
   <ItemGroup>
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="coverlet.collector" Version="10.1.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    <PackageVersion Include="coverlet.MTP" Version="10.1.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
     <PackageVersion Include="MaterialDesignThemes" Version="5.4.0" />

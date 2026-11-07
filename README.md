@@ -44,7 +44,7 @@ and download the `app` of all `artifacts`
 ### Build
 - Windows 10 or greater
 - Visual Studio 2022/JetBrains Rider
-- .NET Desktop workload with `.NET 9`
+- .NET Desktop workload with `.NET 10`
 ### Publish
 We are using [Velopack](https://github.com/velopack/velopack) to generate release
 

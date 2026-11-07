@@ -10,7 +10,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Get Version from Project File
         id: get-version
@@ -21,12 +21,12 @@ jobs:
         run: dotnet build --configuration Release -p:Version="${{ steps.get-version.outputs.version }}"
 
       - name: dotnet test
-        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ${{github.workspace}}/.build/coverage
+        run: dotnet test --configuration Release --no-build --coverlet --coverlet-output-format cobertura --results-directory "${{github.workspace}}/.build/coverage"
 
       - name: ReportGenerator
         uses: danielpalme/ReportGenerator-GitHub-Action@5.4.3
         with:
-          reports: ${{github.workspace}}/.build/coverage/**/coverage.cobertura.xml
+          reports: ${{github.workspace}}/.build/coverage/**/coverage.cobertura*.xml
           targetdir: ${{github.workspace}}/.build/coveragereport/
           reporttypes: Html;MarkdownSummaryGithub
           title: 'Code Coverage'
