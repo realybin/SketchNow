@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Ink;
 using System.Windows.Input;
@@ -6,32 +6,40 @@ using System.Windows.Media;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using CommunityToolkit.Mvvm.Messaging.Messages;
 
 using SketchNow.Models;
 using SketchNow.Models.Enums;
+using SketchNow.Services;
 
 namespace SketchNow.ViewModels;
 
-public partial class MainWindowViewModel : ObservableRecipient, IRecipient<ValueChangedMessage<Settings>>
+public sealed partial class MainWindowViewModel : ObservableObject
 {
-    public MainWindowViewModel(IMessenger messenger)
+    private readonly IToolCursors _toolCursors;
+
+    public MainWindowViewModel(AppSettings settings, IToolCursors toolCursors)
     {
-        messenger.RegisterAll(this);
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(toolCursors);
+
+        Settings = settings;
+        _toolCursors = toolCursors;
+        DrawingAttributes = new DrawingAttributes
+        {
+            Color = SelectedInkColor,
+            Width = SelectedStrokeWidth,
+            Height = SelectedStrokeWidth,
+            FitToCurve = settings.FitToCurve,
+            IgnorePressure = settings.IgnorePressure
+        };
+        settings.PropertyChanged += OnSettingsChanged;
     }
 
-    private readonly CustomCursors _customCursors = new();
-    [ObservableProperty]
-    public partial Cursor InkCanvasCursor { get; set; } = Cursors.Arrow;
+    public AppSettings Settings { get; }
+    public CanvasWorkspace Workspace { get; } = new();
+    public DrawingAttributes DrawingAttributes { get; }
 
-    [ObservableProperty]
-    public partial CanvasPages CanvasPages { get; set; } = new();
-
-    private int _previousPageIndex;
-
-    [ObservableProperty]
-    public partial ObservableCollection<Color> ColorList { get; set; } =
+    public IReadOnlyList<Color> InkColors { get; } =
     [
         Color.FromRgb(28, 27, 31),
         Colors.White,
@@ -43,124 +51,64 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<Value
         Color.FromRgb(234, 43, 180)
     ];
 
-    [ObservableProperty]
-    public partial Color SelectedColor { get; set; } = Colors.Black;
-
-    partial void OnSelectedColorChanged(Color value) => CurrentDrawingAttributes.Color = value;
-    [ObservableProperty]
-    public partial ObservableCollection<double> StrokeSizeList { get; set; } = [5, 7, 9, 11, 13, 20];
+    public IReadOnlyList<double> StrokeWidths { get; } = [5, 7, 9, 11, 13, 20];
 
     [ObservableProperty]
-    public partial double SelectedStrokeSize { get; set; }
+    public partial Color SelectedInkColor { get; set; } = Color.FromRgb(28, 27, 31);
 
-    partial void OnSelectedStrokeSizeChanged(double value) =>
-        CurrentDrawingAttributes.Width = CurrentDrawingAttributes.Height = value;
+    partial void OnSelectedInkColorChanged(Color value) => DrawingAttributes.Color = value;
 
     [ObservableProperty]
-    public partial DrawingAttributes CurrentDrawingAttributes { get; set; } = new()
+    public partial double SelectedStrokeWidth { get; set; } = 5;
+
+    partial void OnSelectedStrokeWidthChanged(double value) =>
+        DrawingAttributes.Width = DrawingAttributes.Height = value;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EditingMode), nameof(ToolCursor), nameof(OverlayBackground))]
+    public partial DrawingTool SelectedTool { get; set; }
+
+    public InkCanvasEditingMode EditingMode => SelectedTool switch
     {
-        Color = Colors.Black,
-        IgnorePressure = Properties.Settings.Default.IsIgnorePressure,
-        FitToCurve = Properties.Settings.Default.IsFitToCurve,
-        Height = 5,
-        Width = 5,
-        IsHighlighter = false
+        DrawingTool.Pen => InkCanvasEditingMode.Ink,
+        DrawingTool.Eraser => Settings.EraseByStroke
+            ? InkCanvasEditingMode.EraseByStroke
+            : InkCanvasEditingMode.EraseByPoint,
+        DrawingTool.Selection => InkCanvasEditingMode.Select,
+        _ => InkCanvasEditingMode.None
     };
 
-    [ObservableProperty]
-    public partial InkCanvasEditingMode SelectedEditingMode { get; set; } = InkCanvasEditingMode.None;
-    [ObservableProperty]
-    public partial int SelectedToolIndex { get; set; }
-    [ObservableProperty]
-    public partial WhiteBoardMode SelectedWhiteBoardMode { get; set; } = WhiteBoardMode.Screen;
-    [ObservableProperty]
-    public partial bool IsMultiPageMode { get; set; }
+    public Cursor ToolCursor => SelectedTool switch
+    {
+        DrawingTool.Pen => _toolCursors.Pen,
+        DrawingTool.Eraser => _toolCursors.Eraser,
+        DrawingTool.Selection => _toolCursors.Selection,
+        _ => Cursors.Arrow
+    };
+
+    public Brush OverlayBackground { get => SelectedTool == DrawingTool.Pointer
+        ? Brushes.Transparent
+        : field; } = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
 
     [RelayCommand]
-    private void ToggleEditMode(int value) => SelectedToolIndex = value;
-    partial void OnSelectedToolIndexChanged(int value)
-    {
-        SelectedEditingMode = value switch
-        {
-            0 => InkCanvasEditingMode.None,
-            1 => InkCanvasEditingMode.Ink,
-            2 => IsEraseByStroke ? InkCanvasEditingMode.EraseByStroke : InkCanvasEditingMode.EraseByPoint,
-            3 => InkCanvasEditingMode.Select,
-            _ => InkCanvasEditingMode.None
-        };
-        WindowBackgroundBrush = value switch
-        {
-            0 => new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
-            1 => new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)),
-            _ => new SolidColorBrush(Color.FromArgb(1, 0, 0, 0))
-        };
-        InkCanvasCursor = value switch
-        {
-            0 => Cursors.Arrow,
-            1 => _customCursors.Circle,
-            2 => _customCursors.Remove,
-            3 => _customCursors.Select,
-            _ => Cursors.Arrow
-        };
-    }
+    private void SelectTool(DrawingTool tool) => SelectedTool = tool;
 
-    partial void OnSelectedWhiteBoardModeChanged(WhiteBoardMode value)
+    [RelayCommand]
+    private void SelectCanvasMode(CanvasMode mode) => Workspace.Mode = mode;
+
+    private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
     {
-        IsMultiPageMode = value == WhiteBoardMode.MultiPages;
-        switch (value)
+        switch (e.PropertyName)
         {
-            case WhiteBoardMode.Screen:
-                if (CanvasPages.SelectedIndex != 0)
-                    _previousPageIndex = CanvasPages.SelectedIndex;
-                CanvasPages.SelectedIndex = 0;
+            case nameof(AppSettings.FitToCurve):
+                DrawingAttributes.FitToCurve = Settings.FitToCurve;
                 break;
-            case WhiteBoardMode.MultiPages:
-                if (CanvasPages.SelectedIndex == 0)
-                    if (CanvasPages.Pages.Count == 1)
-                        CanvasPages.AddPageCommand.Execute(null);
-                    else
-                        CanvasPages.SelectedIndex = _previousPageIndex;
+            case nameof(AppSettings.IgnorePressure):
+                DrawingAttributes.IgnorePressure = Settings.IgnorePressure;
+                break;
+            case nameof(AppSettings.EraseByStroke):
+                OnPropertyChanged(nameof(EditingMode));
                 break;
         }
     }
-
-    [RelayCommand]
-    private void ToggleMultiPageMode(bool value) => SelectedWhiteBoardMode =
-        value ? WhiteBoardMode.MultiPages : WhiteBoardMode.Screen;
-
-
-    [ObservableProperty]
-    public partial Brush WindowBackgroundBrush { get; set; } = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
-
-    public void Receive(ValueChangedMessage<Settings> message)
-    {
-        CurrentDrawingAttributes.FitToCurve = message.Value.IsFitToCurve;
-        CurrentDrawingAttributes.IgnorePressure = message.Value.IsIgnorePressure;
-        IsEraseByStroke = message.Value.IsEraseByStroke;
-        SelectedBackground = message.Value.SelectedBackground;
-    }
-
-
-    /// <summary>
-    /// Synchronize with <see cref="Settings.IsEraseByStroke"/>
-    /// </summary>
-    [ObservableProperty]
-    public partial bool IsEraseByStroke { get; set; } = Properties.Settings.Default.IsEraseByStroke;
-
-    partial void OnIsEraseByStrokeChanged(bool value)
-    {
-        switch (SelectedEditingMode)
-        {
-            case InkCanvasEditingMode.EraseByStroke:
-            case InkCanvasEditingMode.EraseByPoint:
-                SelectedEditingMode = value ? InkCanvasEditingMode.EraseByStroke : InkCanvasEditingMode.EraseByPoint;
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Synchronize with <see cref="Settings.IsFitToCurve"/>
-    /// </summary>
-    [ObservableProperty]
-    public partial Brush SelectedBackground { get; set; } = Properties.Settings.Default.SelectedBackground;
 }

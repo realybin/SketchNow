@@ -24,7 +24,7 @@
       <StackPanel Grid.Column="0">
         <GroupBox Margin="5" Header="{x:Static properties:Resource.General}">
           <StackPanel>
-            <Button Command="{Binding CloseCommand}" Content="{x:Static properties:Resource.ExitProgram}" />
+            <Button Command="{Binding ExitApplicationCommand}" Content="{x:Static properties:Resource.ExitProgram}" />
             <Button Margin="0,8,0,0"
                     Command="{Binding CheckForUpdatesCommand}"
                     Content="{x:Static properties:Resource.CheckUpdates}" />
@@ -46,7 +46,7 @@
                        Text="{x:Static properties:Resource.InkSmooth}" />
             <ToggleButton Grid.Row="0"
                           Grid.Column="1"
-                          IsChecked="{Binding Settings.IsFitToCurve}"
+                          IsChecked="{Binding Settings.FitToCurve}"
                           Style="{StaticResource MaterialDesignSwitchToggleButton}" />
             <TextBlock Grid.Row="1"
                        Grid.Column="0"
@@ -55,7 +55,7 @@
             <ToggleButton Grid.Row="1"
                           Grid.Column="1"
                           Margin="0,5,0,0"
-                          IsChecked="{Binding Settings.IsIgnorePressure}"
+                          IsChecked="{Binding Settings.IgnorePressure}"
                           Style="{StaticResource MaterialDesignSwitchToggleButton}" />
           </Grid>
         </GroupBox>
@@ -67,7 +67,7 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="{x:Static properties:Resource.EraseByStroke}" />
             <ToggleButton Grid.Column="1"
-                          IsChecked="{Binding Settings.IsEraseByStroke}"
+                          IsChecked="{Binding Settings.EraseByStroke}"
                           Style="{StaticResource MaterialDesignSwitchToggleButton}">
               <materialDesign:PackIcon Kind="VectorPoint" />
               <materialDesign:ToggleButtonAssist.OnContent>
@@ -91,7 +91,7 @@
       <GroupBox Grid.Column="1"
                 Margin="5"
                 Header="{x:Static properties:Resource.Background}">
-        <ListBox ItemsSource="{Binding BackGroundBrushes}" SelectedItem="{Binding Settings.SelectedBackground}">
+        <ListBox ItemsSource="{Binding BackgroundBrushes}" SelectedItem="{Binding Settings.CanvasBackground}">
           <ListBox.ItemsPanel>
             <ItemsPanelTemplate>
               <WrapPanel />
@@ -109,9 +109,9 @@
     </Grid>
     <ProgressBar Height="10"
                  VerticalAlignment="Bottom"
-                 IsIndeterminate="{Binding Progress.IsIndeterminate}"
-                 Visibility="{Binding Progress.IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
-                 Value="{Binding Progress.Value}" />
+                 IsIndeterminate="{Binding UpdateProgress.IsIndeterminate}"
+                 Visibility="{Binding UpdateProgress.IsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                 Value="{Binding UpdateProgress.Percentage}" />
     <materialDesign:Snackbar HorizontalAlignment="Right"
                              VerticalAlignment="Top"
                              MessageQueue="{Binding MessageQueue}" />

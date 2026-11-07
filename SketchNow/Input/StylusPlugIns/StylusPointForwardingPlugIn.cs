@@ -1,31 +1,30 @@
-using System.Windows.Input;
 using System.Windows.Input.StylusPlugIns;
 
 namespace SketchNow.Input.StylusPlugIns;
 
-public class CustomStylusPlugin : StylusPlugIn
+internal sealed class StylusPointForwardingPlugIn : StylusPlugIn
 {
     protected override void OnStylusDown(RawStylusInput rawStylusInput)
     {
-        // Call the base class before modifying the data.
         base.OnStylusDown(rawStylusInput);
-
-        rawStylusInput.SetStylusPoints(rawStylusInput.GetStylusPoints());
+        ForwardStylusPoints(rawStylusInput);
     }
 
     protected override void OnStylusMove(RawStylusInput rawStylusInput)
     {
-        // Call the base class before modifying the data.
         base.OnStylusMove(rawStylusInput);
-
-        rawStylusInput.SetStylusPoints(rawStylusInput.GetStylusPoints());
+        ForwardStylusPoints(rawStylusInput);
     }
 
     protected override void OnStylusUp(RawStylusInput rawStylusInput)
     {
-        // Call the base class before modifying the data.
         base.OnStylusUp(rawStylusInput);
+        ForwardStylusPoints(rawStylusInput);
+    }
 
+    private static void ForwardStylusPoints(RawStylusInput rawStylusInput)
+    {
+        // Setting points marks the input as modified in WPF, even when their values are unchanged.
         rawStylusInput.SetStylusPoints(rawStylusInput.GetStylusPoints());
     }
 }

@@ -10,8 +10,7 @@
              mc:Ignorable="d">
   <DockPanel Width="48"
              Height="48"
-             Background="Transparent"
-             ToolTip="{Binding ToolTip, RelativeSource={RelativeSource AncestorType=UserControl}}">
+             Background="Transparent">
     <TextBlock HorizontalAlignment="Center"
                DockPanel.Dock="Bottom"
                Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}}"

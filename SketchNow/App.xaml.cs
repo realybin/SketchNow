@@ -1,6 +1,6 @@
-﻿using System.Text;
-
-using CommunityToolkit.Mvvm.Messaging;
+using System.Text;
+using System.Windows;
+using System.Windows.Threading;
 
 using MaterialDesignThemes.Wpf;
 
@@ -8,11 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using SketchNow.Services;
 using SketchNow.ViewModels;
-using SketchNow.Views;
-
-using System.Windows;
-using System.Windows.Threading;
 
 using SingleInstanceCore;
 
@@ -58,12 +55,18 @@ public partial class App : Application, ISingleInstance
                 services.AddSingleton<MainWindow>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<SettingsViewModel>();
+                services.AddSingleton<IToolCursors, ToolCursors>();
+                services.AddSingleton<ISettingsStore, UserSettingsStore>();
+                services.AddSingleton(provider =>
+                {
+                    var store = provider.GetRequiredService<ISettingsStore>();
+                    var settings = store.Load();
+                    settings.PropertyChanged += (_, _) => store.Save(settings);
+                    return settings;
+                });
                 services.AddSingleton(_ => new UpdateManager(
                     new GithubSource("https://github.com/realybin/SketchNow", null, false)));
-
-                services.AddSingleton<WeakReferenceMessenger>();
-                services.AddSingleton<IMessenger, WeakReferenceMessenger>(provider =>
-                    provider.GetRequiredService<WeakReferenceMessenger>());
+                services.AddSingleton<IAppUpdateService, VelopackUpdateService>();
 
                 services.AddSingleton(_ => Current.Dispatcher);
 

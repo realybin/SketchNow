@@ -1,20 +1,21 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Messaging.Messages;
-using CommunityToolkit.Mvvm.Messaging;
-using CommunityToolkit.Mvvm.Input;
-using Velopack;
-using MaterialDesignThemes.Wpf;
-using SketchNow.Models;
 using System.Windows;
-using System.Collections.ObjectModel;
 using System.Windows.Media;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+using MaterialDesignThemes.Wpf;
+
+using SketchNow.Models;
+using SketchNow.Services;
+
+using Velopack;
 
 namespace SketchNow.ViewModels;
 
-public partial class SettingsViewModel : ObservableRecipient
+public sealed partial class SettingsViewModel : ObservableObject
 {
-    [ObservableProperty]
-    public partial ObservableCollection<Brush> BackGroundBrushes { get; set; } =
+    public IReadOnlyList<Brush> BackgroundBrushes { get; } =
     [
         new SolidColorBrush(Colors.White),
         new SolidColorBrush(Color.FromRgb(255, 253, 209)),
@@ -43,59 +44,51 @@ public partial class SettingsViewModel : ObservableRecipient
         }
     ];
 
-    private readonly UpdateManager _updateManager;
+    private readonly IAppUpdateService _updateService;
 
-    public SettingsViewModel(IMessenger messenger, ISnackbarMessageQueue messageQueue, UpdateManager updateManager)
+    public SettingsViewModel(AppSettings settings, ISnackbarMessageQueue messageQueue, IAppUpdateService updateService)
     {
-        MessageQueue = messageQueue ?? throw new ArgumentNullException(nameof(messageQueue));
-        _updateManager = updateManager ?? throw new ArgumentNullException(nameof(updateManager));
-        IsActive = true;
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(messageQueue);
+        ArgumentNullException.ThrowIfNull(updateService);
 
-        Settings.PropertyChanged += (_, _) =>
-        {
-            Settings.SaveSettingsCommand.Execute(null);
-            messenger.Send(
-                new ValueChangedMessage<Settings>(Settings)
-            );
-        };
+        Settings = settings;
+        MessageQueue = messageQueue;
+        _updateService = updateService;
     }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedRecipients]
-    public partial Settings Settings { get; set; } = new();
+    public AppSettings Settings { get; }
 
-    [ObservableProperty]
-    public partial ISnackbarMessageQueue MessageQueue { get; set; }
+    public ISnackbarMessageQueue MessageQueue { get; }
 
     [RelayCommand]
-    private static void Close()
+    private static void ExitApplication()
     {
         Application.Current.Shutdown();
     }
 
-    [ObservableProperty]
-    public partial Progress Progress { get; set; } = new();
+    public UpdateProgress UpdateProgress { get; } = new();
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CheckForUpdatesCommand))]
-    [NotifyCanExecuteChangedFor(nameof(UpdateAppCommand))]
-    public partial bool IsUpdating { get; set; }
+    [NotifyCanExecuteChangedFor(nameof(InstallUpdateCommand))]
+    public partial bool IsUpdateInProgress { get; private set; }
 
-    private bool CanUpdate() => !IsUpdating;
+    private bool CanUpdate() => !IsUpdateInProgress;
 
     [RelayCommand(CanExecute = nameof(CanUpdate))]
-    private async Task CheckForUpdates()
+    private async Task CheckForUpdatesAsync()
     {
-        if (IsUpdating)
+        if (IsUpdateInProgress)
             return;
 
-        IsUpdating = true;
+        IsUpdateInProgress = true;
         try
         {
-            UpdateInfo? newVersion = await _updateManager.CheckForUpdatesAsync();
-            if (newVersion != null)
+            UpdateInfo? update = await _updateService.CheckForUpdatesAsync();
+            if (update is not null)
                 MessageQueue.Enqueue(Properties.Resource.NewVersionFound, Properties.Resource.InstallAndUpdate,
-                    _ => UpdateAppCommand.ExecuteAsync(newVersion),
+                    _ => InstallUpdateCommand.ExecuteAsync(update),
                     null,
                     false,
                     true,
@@ -109,29 +102,29 @@ public partial class SettingsViewModel : ObservableRecipient
         }
         finally
         {
-            IsUpdating = false;
+            IsUpdateInProgress = false;
         }
     }
 
     [RelayCommand(CanExecute = nameof(CanUpdate))]
-    private async Task UpdateApp(UpdateInfo newVersion)
+    private async Task InstallUpdateAsync(UpdateInfo update)
     {
-        if (IsUpdating)
+        if (IsUpdateInProgress)
             return;
 
-        IsUpdating = true;
-        Progress.Value = 0;
-        Progress.IsVisible = true;
-        Progress.IsIndeterminate = false;
+        IsUpdateInProgress = true;
+        UpdateProgress.Percentage = 0;
+        UpdateProgress.IsVisible = true;
+        UpdateProgress.IsIndeterminate = false;
 
         try
         {
             MessageQueue.Enqueue(Properties.Resource.DownloadingUpdatesPleaseWait);
-            IProgress<int> progress = new System.Progress<int>(value => Progress.Value = value);
-            await _updateManager.DownloadUpdatesAsync(newVersion, progress.Report);
+            IProgress<int> progress = new Progress<int>(value => UpdateProgress.Percentage = value);
+            await _updateService.DownloadUpdatesAsync(update, progress);
             MessageQueue.Enqueue(Properties.Resource.DownloadedUpdatesPleaseWait);
-            Progress.IsIndeterminate = true;
-            _updateManager.ApplyUpdatesAndRestart(newVersion);
+            UpdateProgress.IsIndeterminate = true;
+            _updateService.InstallAndRestart(update);
         }
         catch (Exception e)
         {
@@ -139,12 +132,9 @@ public partial class SettingsViewModel : ObservableRecipient
         }
         finally
         {
-            Progress.IsVisible = false;
-            Progress.IsIndeterminate = false;
-            IsUpdating = false;
+            UpdateProgress.IsVisible = false;
+            UpdateProgress.IsIndeterminate = false;
+            IsUpdateInProgress = false;
         }
     }
-
 }
-
-

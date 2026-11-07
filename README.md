@@ -55,7 +55,8 @@ dotnet vpk pack --packId SketchNow --packVersion 1.1.0 --packDir .\publish --mai
 ```
 Use the application version from `SketchNow/SketchNow.csproj` for `--packVersion`.
 ### Test
-- Moq.AutoMocker
+- xUnit v3
+- Moq
 ### Credit
 - [DotnetTemplates](https://github.com/Keboo/DotnetTemplates)
 - [wpf](https://github.com/dotnet/wpf)
@@ -64,7 +65,7 @@ Use the application version from `SketchNow/SketchNow.csproj` for `--packVersion
 - [ValueConverters.NET](https://github.com/thomasgalliker/ValueConverters.NET)
 - [WPF.JoshSmith.Controls.DragCanvas](https://github.com/denxorz/WPF.JoshSmith.Controls.DragCanvas)
 - [Velopack](https://github.com/velopack/velopack)
-- Moq.AutoMocker
+- Moq
 - System.Text.Json
 - Microsoft.Extensions.Hosting
 - Microsoft.Extensions.DependencyInjection

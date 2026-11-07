@@ -20,22 +20,22 @@
               VerticalAlignment="Bottom"
               Background="#09000000"
               Orientation="Horizontal"
-              Visibility="{Binding IsMultiPageMode, Converter={StaticResource BoolToVisibilityConverter}}">
+               Visibility="{Binding Workspace.IsWhiteboard, Converter={StaticResource BoolToVisibilityConverter}}">
     <Button Height="48"
-            Command="{Binding CanvasPages.PreviousCommand}"
+            Command="{Binding Workspace.PreviousPageCommand}"
             Content="{materialDesign:PackIcon Kind=ArrowLeft}"
             Style="{StaticResource MaterialDesignFlatButton}" />
     <Button Height="48"
-            Command="{Binding CanvasPages.NextCommand}"
+            Command="{Binding Workspace.NextPageCommand}"
             Content="{materialDesign:PackIcon Kind=ArrowRight}"
             Style="{StaticResource MaterialDesignFlatButton}" />
     <Button Width="200"
             Height="48"
             Style="{StaticResource MaterialDesignFlatButton}">
-      <TextBlock VerticalAlignment="Center"><Run Text="{Binding CanvasPages.SelectedIndex, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding CanvasPages.Pages.Count, ConverterParameter=-1, Converter={StaticResource MathAddConverter}, Mode=OneWay}" /></TextBlock>
+      <TextBlock VerticalAlignment="Center"><Run Text="{Binding Workspace.PageNumber, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding Workspace.PageCount, Mode=OneWay}" /></TextBlock>
     </Button>
     <Button Height="48"
-            Command="{Binding CanvasPages.AddPageCommand}"
+            Command="{Binding Workspace.AddPageCommand}"
             Content="{materialDesign:PackIcon Kind=Plus}"
             Style="{StaticResource MaterialDesignFlatButton}" />
   </StackPanel>

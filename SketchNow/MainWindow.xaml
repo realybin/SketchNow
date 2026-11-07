@@ -1,4 +1,4 @@
-﻿<Window x:Class="SketchNow.MainWindow"
+<Window x:Class="SketchNow.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:SketchNow.Controls"
@@ -7,7 +7,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:properties="clr-namespace:SketchNow.Properties"
-        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:enums="clr-namespace:SketchNow.Models.Enums"
         xmlns:valueConverters="http://schemas.superdev.ch/valueconverters/2016/xaml"
         xmlns:views="clr-namespace:SketchNow.Views"
         xmlns:vms="clr-namespace:SketchNow.ViewModels"
@@ -17,7 +17,7 @@
         d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False,
                                          Type={x:Type vms:MainWindowViewModel}}"
         AllowsTransparency="True"
-        Background="{Binding WindowBackgroundBrush}"
+        Background="{Binding OverlayBackground}"
         ShowInTaskbar="False"
         Topmost="True"
         WindowStartupLocation="CenterScreen"
@@ -26,52 +26,34 @@
         mc:Ignorable="d">
   <Window.InputBindings>
     <KeyBinding Key="C"
-                Command="{Binding ToggleEditModeCommand}"
-                Modifiers="Shift">
-      <KeyBinding.CommandParameter>
-        <system:Int32>0</system:Int32>
-      </KeyBinding.CommandParameter>
-    </KeyBinding>
+                Command="{Binding SelectToolCommand}"
+                CommandParameter="{x:Static enums:DrawingTool.Pointer}"
+                Modifiers="Shift" />
     <KeyBinding Key="I"
-                Command="{Binding ToggleEditModeCommand}"
-                Modifiers="Shift">
-      <KeyBinding.CommandParameter>
-        <system:Int32>1</system:Int32>
-      </KeyBinding.CommandParameter>
-    </KeyBinding>
+                Command="{Binding SelectToolCommand}"
+                CommandParameter="{x:Static enums:DrawingTool.Pen}"
+                Modifiers="Shift" />
     <KeyBinding Key="E"
-                Command="{Binding ToggleEditModeCommand}"
-                Modifiers="Shift">
-      <KeyBinding.CommandParameter>
-        <system:Int32>2</system:Int32>
-      </KeyBinding.CommandParameter>
-    </KeyBinding>
+                Command="{Binding SelectToolCommand}"
+                CommandParameter="{x:Static enums:DrawingTool.Eraser}"
+                Modifiers="Shift" />
     <KeyBinding Key="S"
-                Command="{Binding ToggleEditModeCommand}"
-                Modifiers="Shift">
-      <KeyBinding.CommandParameter>
-        <system:Int32>3</system:Int32>
-      </KeyBinding.CommandParameter>
-    </KeyBinding>
+                Command="{Binding SelectToolCommand}"
+                CommandParameter="{x:Static enums:DrawingTool.Selection}"
+                Modifiers="Shift" />
     <KeyBinding Key="S"
-                Command="{Binding ToggleMultiPageModeCommand}"
-                Modifiers="Alt">
-      <KeyBinding.CommandParameter>
-        <system:Boolean>False</system:Boolean>
-      </KeyBinding.CommandParameter>
-    </KeyBinding>
+                Command="{Binding SelectCanvasModeCommand}"
+                CommandParameter="{x:Static enums:CanvasMode.Desktop}"
+                Modifiers="Alt" />
     <KeyBinding Key="B"
-                Command="{Binding ToggleMultiPageModeCommand}"
-                Modifiers="Alt">
-      <KeyBinding.CommandParameter>
-        <system:Boolean>True</system:Boolean>
-      </KeyBinding.CommandParameter>
-    </KeyBinding>
+                Command="{Binding SelectCanvasModeCommand}"
+                CommandParameter="{x:Static enums:CanvasMode.Whiteboard}"
+                Modifiers="Alt" />
     <KeyBinding Key="Z"
-                Command="{Binding CanvasPages.SelectedPage.UndoCommand}"
+                Command="{Binding Workspace.CurrentPage.UndoCommand}"
                 Modifiers="Control" />
     <KeyBinding Key="Y"
-                Command="{Binding CanvasPages.SelectedPage.RedoCommand}"
+                Command="{Binding Workspace.CurrentPage.RedoCommand}"
                 Modifiers="Control" />
   </Window.InputBindings>
   <Window.Style>
@@ -112,13 +94,13 @@
         </Grid>
       </materialDesign:DialogHost.DialogContent>
       <Grid>
-        <Canvas Background="{Binding SelectedBackground}" Visibility="{Binding IsMultiPageMode, Converter={StaticResource BoolToVisibilityConverter}}" />
-        <controls:CustomInkCanvas Background="Transparent"
-                                Cursor="{Binding InkCanvasCursor}"
-                                DefaultDrawingAttributes="{Binding CurrentDrawingAttributes}"
-                                EditingMode="{Binding SelectedEditingMode}"
-                                Strokes="{Binding CanvasPages.SelectedPage.Strokes}"
-                                UseCustomCursor="True" />
+        <Canvas Background="{Binding Settings.CanvasBackground}" Visibility="{Binding Workspace.IsWhiteboard, Converter={StaticResource BoolToVisibilityConverter}}" />
+        <controls:DrawingInkCanvas Background="Transparent"
+                                   Cursor="{Binding ToolCursor}"
+                                   DefaultDrawingAttributes="{Binding DrawingAttributes}"
+                                   EditingMode="{Binding EditingMode}"
+                                   Strokes="{Binding Workspace.CurrentPage.Strokes, Mode=OneWay}"
+                                   UseCustomCursor="True" />
         <Button HorizontalAlignment="Left"
               VerticalAlignment="Center"
               Background="{DynamicResource MaterialDesignTextFieldBoxBackground}"
@@ -127,7 +109,7 @@
           <materialDesign:PackIcon Kind="Settings" />
         </Button>
         <views:PageNavigationView />
-        <views:ToolBarView />
+        <views:DrawingToolbarView />
       </Grid>
     </materialDesign:DialogHost>
   </Grid>

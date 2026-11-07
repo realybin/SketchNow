@@ -1,8 +1,6 @@
-﻿using System.Diagnostics;
 using System.Windows.Input;
 
 using SketchNow.ViewModels;
-using SketchNow.Views;
 
 namespace SketchNow;
 
@@ -12,12 +10,12 @@ namespace SketchNow;
 public partial class MainWindow
 {
     public MainWindow(
-        MainWindowViewModel mainViewModel,
+        MainWindowViewModel mainWindowViewModel,
         SettingsViewModel settingsViewModel)
     {
         InitializeComponent();
 
-        DataContext = mainViewModel;
+        DataContext = mainWindowViewModel;
         SettingsView.DataContext = settingsViewModel;
 
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Close, OnClose));

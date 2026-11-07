@@ -28,7 +28,6 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageVersion Include="Moq" Version="4.21.0" />
-    <PackageVersion Include="Moq.AutoMock" Version="4.0.3" />
     <PackageVersion Include="SingleInstanceCore" Version="2.2.2" />
     <PackageVersion Include="ValueConverters" Version="3.1.22" />
     <PackageVersion Include="Velopack" Version="1.2.161" />
