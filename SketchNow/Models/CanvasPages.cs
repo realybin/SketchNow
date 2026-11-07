@@ -8,7 +8,8 @@ namespace SketchNow.Models;
 
 public partial class CanvasPage : ObservableObject
 {
-    [ObservableProperty] private StrokeCollection _strokes = [];
+    [ObservableProperty]
+    public partial StrokeCollection Strokes { get; set; } = [];
 
     #region Undo/Redo
 
@@ -17,7 +18,7 @@ public partial class CanvasPage : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(UndoCommand), nameof(RedoCommand), nameof(ClearCommand))]
-    private int _counter;
+    public partial int Counter { get; set; }
 
     private readonly ObservableCollection<StrokeCollection> _undoStack = [];
     private readonly ObservableCollection<StrokeCollection> _redoStack = [];
@@ -77,7 +78,7 @@ public partial class CanvasPage : ObservableObject
     {
         // Listen for changes in the Strokes property
         Strokes.StrokesChanged += Strokes_Changed;
-        _undoStack.Add(CloneStrokeCollection(_strokes));
+        _undoStack.Add(CloneStrokeCollection(Strokes));
     }
 
     [RelayCommand(CanExecute = nameof(CanClear))]
@@ -94,12 +95,13 @@ public partial class CanvasPages : ObservableObject
     /// <summary>
     /// Page 1 was reserved by default desktop canvas. For the convenience of managing <see cref="CanvasPages"/>, the latter <see cref="CanvasPages"/> are Board pages.
     /// </summary>
-    [ObservableProperty] private ObservableCollection<CanvasPage> _pages = [new()];
+    [ObservableProperty]
+    public partial ObservableCollection<CanvasPage> Pages { get; set; } = [new()];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedPage))]
     [NotifyCanExecuteChangedFor(nameof(PreviousCommand), nameof(NextCommand))]
-    private int _selectedIndex;
+    public partial int SelectedIndex { get; set; }
 
     public CanvasPage SelectedPage
     {

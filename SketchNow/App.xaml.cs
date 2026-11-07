@@ -59,6 +59,7 @@ public partial class App : Application, ISingleInstance
             {
                 services.AddSingleton<MainWindow>();
                 services.AddSingleton<MainWindowViewModel>();
+                services.AddSingleton<SettingsViewModel>();
 
                 services.AddSingleton<WeakReferenceMessenger>();
                 services.AddSingleton<IMessenger, WeakReferenceMessenger>(provider =>
