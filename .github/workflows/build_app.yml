@@ -56,11 +56,15 @@ jobs:
 
       - name: dotnet publish
         if: ${{ github.event_name != 'pull_request' }}
-        run: dotnet publish --configuration Release --no-build -p:Version="${{ env.version }}" -p:PublishDir=${{github.workspace}}/.build/publish
+        run: dotnet publish SketchNow/SketchNow.csproj --configuration Release --runtime win-x64 --self-contained true -p:Version="${{ env.version }}" -p:PublishDir="${{github.workspace}}/.build/publish"
+
+      - name: Restore Velopack CLI
+        if: ${{ github.event_name != 'pull_request' }}
+        run: dotnet tool restore
 
       - name: Build Velopack packages
         if: ${{ github.event_name != 'pull_request' }}
-        run: dotnet tool update -g vpk && vpk pack -u SketchNow -v ${{ env.version }} -p ${{github.workspace}}/.build/publish -e SketchNow.exe -o ${{github.workspace}}/.build/release
+        run: dotnet vpk pack --packId SketchNow --packVersion ${{ env.version }} --packDir "${{github.workspace}}/.build/publish" --mainExe SketchNow.exe --runtime win-x64 --channel win --outputDir "${{github.workspace}}/.build/release"
         
       - name: Upload Velopack Portable artifact for deployment job
         if: ${{ github.event_name != 'pull_request' }}

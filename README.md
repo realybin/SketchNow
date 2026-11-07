@@ -24,11 +24,11 @@ See projects [here](https://github.com/orgs/SketchNow/projects)
 
 ### Install
 
-Go [release](https://github.com/SketchNow/SketchNow.WPF/releases), and choose the version you want.
+Go [release](https://github.com/realybin/SketchNow/releases), and choose the version you want.
 
 If you want to have a taste of the latest commited code,
-you can go [actions](https://github.com/SketchNow/SketchNow.WPF/actions),
-and download the `app` of all `artifacts`
+you can go [actions](https://github.com/realybin/SketchNow/actions),
+and download the `Portable` or `Installer` artifact
 
 ### Privacy
 | Permission    | Detail                                                                                                |
@@ -46,16 +46,14 @@ and download the `app` of all `artifacts`
 - Visual Studio 2026/JetBrains Rider
 - .NET Desktop workload with `.NET 10`
 ### Publish
-We are using [Velopack](https://github.com/velopack/velopack) to generate release
+We use [Velopack](https://github.com/velopack/velopack) to generate releases.
 
-Before you use the following commands,
-please confirm that you've read [this](https://docs.velopack.io/getting-started/csharp)
 ```shell
-dotnet publish -c Release --self-contained -r win-x64 -o .\publish
+dotnet tool restore
+dotnet publish SketchNow/SketchNow.csproj -c Release --self-contained true -r win-x64 -o .\publish
+dotnet vpk pack --packId SketchNow --packVersion 1.1.0 --packDir .\publish --mainExe SketchNow.exe --runtime win-x64 --channel win --outputDir .\Releases
 ```
-```shell
-vpk pack -u SketchNow -v 1.0.0 -p .\publish -e SketchNow.exe
-```
+Use the application version from `SketchNow/SketchNow.csproj` for `--packVersion`.
 ### Test
 - Moq.AutoMocker
 ### Credit

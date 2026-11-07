@@ -1,6 +1,14 @@
 name: Deploy to GitHub Releases
 
 on: workflow_dispatch
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  release-repo: https://github.com/${{ github.repository }}
+
 jobs:
   deploy-to-github-releases:
     runs-on: windows-latest
@@ -39,11 +47,19 @@ jobs:
           if-no-files-found: error
 
       - name: Publish Application
-        run: dotnet publish -r win-x64 --self-contained true --configuration Release -p:Version="${{ steps.get-version.outputs.version }}" -p:PublishDir=${{ github.workspace }}/.build/publish
+        run: dotnet publish SketchNow/SketchNow.csproj --runtime win-x64 --self-contained true --configuration Release -p:Version="${{ steps.get-version.outputs.version }}" -p:PublishDir="${{ github.workspace }}/.build/publish"
 
-      - name: Create Velopack Release
+      - name: Restore Velopack CLI
+        run: dotnet tool restore
+
+      - name: Download previous Velopack release
+        run: dotnet vpk download github --repoUrl "${{ env.release-repo }}" --channel win --outputDir "${{ github.workspace }}/.build/release"
+
+      - name: Build Velopack packages
+        run: dotnet vpk pack --packId SketchNow --packVersion ${{ steps.get-version.outputs.version }} --packDir "${{ github.workspace }}/.build/publish" --mainExe SketchNow.exe --runtime win-x64 --channel win --outputDir "${{ github.workspace }}/.build/release"
+
+      - name: Upload Velopack release
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          dotnet tool install -g vpk
-          vpk download github --repoUrl https://github.com/SketchNow/SketchNow.WPF
-          vpk pack -u SketchNow -v ${{ steps.get-version.outputs.version }} -p ${{ github.workspace }}/.build/publish
-          vpk upload github --repoUrl https://github.com/SketchNow/SketchNow.WPF --releaseName "SketchNow ${{ steps.get-version.outputs.version }}" --tag v${{ steps.get-version.outputs.version }} --token ${{ secrets.RELEASE_TOKEN }}
+          dotnet vpk upload github --repoUrl "${{ env.release-repo }}" --channel win --outputDir "${{ github.workspace }}/.build/release" --releaseName "SketchNow ${{ steps.get-version.outputs.version }}" --tag v${{ steps.get-version.outputs.version }} --token "$env:RELEASE_TOKEN"

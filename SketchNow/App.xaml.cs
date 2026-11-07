@@ -29,9 +29,7 @@ public partial class App : Application, ISingleInstance
     [STAThread]
     private static void Main(string[] args)
     {
-#if !DEBUG
         VelopackApp.Build().Run();
-#endif
         MainAsync(args).GetAwaiter().GetResult();
     }
 
@@ -60,6 +58,8 @@ public partial class App : Application, ISingleInstance
                 services.AddSingleton<MainWindow>();
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<SettingsViewModel>();
+                services.AddSingleton(_ => new UpdateManager(
+                    new GithubSource("https://github.com/realybin/SketchNow", null, false)));
 
                 services.AddSingleton<WeakReferenceMessenger>();
                 services.AddSingleton<IMessenger, WeakReferenceMessenger>(provider =>

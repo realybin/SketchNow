@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.Input;
 using Velopack;
 using MaterialDesignThemes.Wpf;
 using SketchNow.Models;
-using Velopack.Sources;
 using System.Windows;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
@@ -44,9 +43,12 @@ public partial class SettingsViewModel : ObservableRecipient
         }
     ];
 
-    public SettingsViewModel(IMessenger messenger, ISnackbarMessageQueue messageQueue)
+    private readonly UpdateManager _updateManager;
+
+    public SettingsViewModel(IMessenger messenger, ISnackbarMessageQueue messageQueue, UpdateManager updateManager)
     {
         MessageQueue = messageQueue ?? throw new ArgumentNullException(nameof(messageQueue));
+        _updateManager = updateManager ?? throw new ArgumentNullException(nameof(updateManager));
         IsActive = true;
 
         Settings.PropertyChanged += (_, _) =>
@@ -74,47 +76,73 @@ public partial class SettingsViewModel : ObservableRecipient
     [ObservableProperty]
     public partial Progress Progress { get; set; } = new();
 
-    readonly UpdateManager _mgr = new(new GithubSource(@"https://github.com/realybin/SketchNow", null, false));
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CheckForUpdatesCommand))]
+    [NotifyCanExecuteChangedFor(nameof(UpdateAppCommand))]
+    public partial bool IsUpdating { get; set; }
 
-    [RelayCommand]
+    private bool CanUpdate() => !IsUpdating;
+
+    [RelayCommand(CanExecute = nameof(CanUpdate))]
     private async Task CheckForUpdates()
     {
-        UpdateInfo? newVersion = null;
+        if (IsUpdating)
+            return;
 
+        IsUpdating = true;
         try
         {
-            newVersion = await _mgr.CheckForUpdatesAsync();
+            UpdateInfo? newVersion = await _updateManager.CheckForUpdatesAsync();
+            if (newVersion != null)
+                MessageQueue.Enqueue(Properties.Resource.NewVersionFound, Properties.Resource.InstallAndUpdate,
+                    _ => UpdateAppCommand.ExecuteAsync(newVersion),
+                    null,
+                    false,
+                    true,
+                    TimeSpan.FromSeconds(10));
+            else
+                MessageQueue.Enqueue(Properties.Resource.UpdatesAreNotAvailable);
         }
         catch (Exception e)
         {
             MessageQueue.Enqueue(e.Message);
         }
-        if (newVersion != null)
-            MessageQueue.Enqueue(Properties.Resource.NewVersionFound, Properties.Resource.InstallAndUpdate,
-                _ => UpdateAppCommand.ExecuteAsync(newVersion),
-                null,
-                false,
-                true,
-                TimeSpan.FromSeconds(10));
-        else
-            MessageQueue.Enqueue(Properties.Resource.UpdatesAreNotAvailable);
+        finally
+        {
+            IsUpdating = false;
+        }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanUpdate))]
     private async Task UpdateApp(UpdateInfo newVersion)
     {
+        if (IsUpdating)
+            return;
+
+        IsUpdating = true;
+        Progress.Value = 0;
         Progress.IsVisible = true;
-        Progress.IsIndeterminate = true;
-        MessageQueue.Enqueue(Properties.Resource.DownloadingUpdatesPleaseWait);
-
-        await Task.Delay(5);
-
         Progress.IsIndeterminate = false;
 
-        await _mgr.DownloadUpdatesAsync(newVersion, i => Progress.Value = i);
-        MessageQueue.Enqueue(Properties.Resource.DownloadedUpdatesPleaseWait);
-        Progress.IsIndeterminate = true;
-        _mgr.ApplyUpdatesAndRestart(newVersion);
+        try
+        {
+            MessageQueue.Enqueue(Properties.Resource.DownloadingUpdatesPleaseWait);
+            IProgress<int> progress = new System.Progress<int>(value => Progress.Value = value);
+            await _updateManager.DownloadUpdatesAsync(newVersion, progress.Report);
+            MessageQueue.Enqueue(Properties.Resource.DownloadedUpdatesPleaseWait);
+            Progress.IsIndeterminate = true;
+            _updateManager.ApplyUpdatesAndRestart(newVersion);
+        }
+        catch (Exception e)
+        {
+            MessageQueue.Enqueue(e.Message);
+        }
+        finally
+        {
+            Progress.IsVisible = false;
+            Progress.IsIndeterminate = false;
+            IsUpdating = false;
+        }
     }
 
 }
