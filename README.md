@@ -43,7 +43,7 @@ and download the `app` of all `artifacts`
 4. Follow [`Semantic Versioning`](https://semver.org/)
 ### Build
 - Windows 10 or greater
-- Visual Studio 2022/JetBrains Rider
+- Visual Studio 2026/JetBrains Rider
 - .NET Desktop workload with `.NET 10`
 ### Publish
 We are using [Velopack](https://github.com/velopack/velopack) to generate release
